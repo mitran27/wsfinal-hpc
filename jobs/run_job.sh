@@ -13,7 +13,10 @@ EXTRA=""; LIMIT=""; [ "$TAG" = lr-smoke ] && { EXTRA="--max-train-queries 400"; 
 cp $R/code/configs/pilot.toml $W/configs/pilot.toml
 M=$W/work/models/$TAG; O=$W/out/$TAG; mkdir -p $M $O; LOG=$O/train.log; start=$(date +%s)
 echo "TAG=$TAG variant=$variant seed=$seed sets=[$A100 $sets] splits=[$splits] start $(date)" | tee $LOG
-nvidia-smi --query-gpu=name,memory.total --format=csv,noheader | tee -a $LOG
+nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader | tee -a $LOG
+# Never train on the CPU by accident: stop at once if this torch build cannot use the GPU.
+py -c 'import torch; ok = torch.cuda.is_available(); print("torch", torch.__version__, "cuda build", torch.version.cuda, "GPU visible:", ok); raise SystemExit(0 if ok else 3)' 2>&1 | tee -a $LOG
+[ ${PIPESTATUS[0]} = 0 ] || { echo "STOPPED: torch cannot see the GPU (driver/CUDA mismatch); no training was run" | tee -a $LOG; exit 3; }
 rerank $ARGS finetune $variant --seed $seed --tag $TAG $EXTRA 2>&1 | grep -v -i "warn" | tee -a $LOG
 RC=${PIPESTATUS[0]}
 if [ $RC = 0 ]; then

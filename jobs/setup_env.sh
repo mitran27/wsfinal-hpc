@@ -32,7 +32,7 @@ TORCH="torch${TV:+==$TV}"; echo "torch to install: $TORCH"
 export PIP_CACHE_DIR=/scratch/$USER/pip-cache
 rm -rf $W/venv
 box "P=\$(command -v python || command -v python3); \$P -m venv $W/venv"
-box "$W/venv/bin/pip install -q --upgrade pip && $W/venv/bin/pip install -q '$TORCH' && \
+box "$W/venv/bin/pip install -q --upgrade pip && $W/venv/bin/pip install --progress-bar on '$TORCH' && \
      $W/venv/bin/pip install -q 'transformers==5.24.0' 'safetensors>=0.4' 'huggingface_hub>=0.25' numpy scipy"
 box "$W/venv/bin/python -c 'import torch, transformers; print(\"venv torch\", torch.__version__, \"cuda build\", torch.version.cuda, \"transformers\", transformers.__version__)'"
 echo "3/4 backbones into $HF_HOME (compute nodes then run offline)"
