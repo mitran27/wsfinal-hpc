@@ -27,7 +27,7 @@ echo "2/4 venv from the overlay's Python with torch + the pinned transformers st
 box 'echo "overlay python: $(command -v python || command -v python3)"'
 # torch: the version the earlier cv4 jobs used from /scratch/$USER/pylib (known to work with these nodes' drivers),
 # installed into our own venv so none of pylib's older libraries shadow ours.
-TV=$(ls -d /scratch/$USER/pylib/torch-*.dist-info 2>/dev/null | head -1 | sed -E 's/.*torch-([^-]+)\.dist-info/\1/')
+TV=$(ls -d /scratch/$USER/pylib/torch-*.dist-info 2>/dev/null | head -1 | sed -E "s/.*torch-([^-+]+).*\.dist-info/\1/")
 TORCH="torch${TV:+==$TV}"; echo "torch to install: $TORCH"
 export PIP_CACHE_DIR=/scratch/$USER/pip-cache
 rm -rf $W/venv
