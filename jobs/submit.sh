@@ -6,6 +6,7 @@
 source "$(dirname "$0")/env.sh"
 BUDGET=$(grep -oE '^# BUDGET_HOURS=[0-9.]+' $R/runs.tsv | cut -d= -f2)
 [ $# -ge 1 ] || { echo "usage: submit.sh <stage> [stage...]"; exit 1; }
+[ -f $W/.setup_ok ] || { echo "setup has not finished: run  bash $R/jobs/setup_env.sh  first"; exit 1; }
 used=$(sacct -X -n -P -S 2026-11-24 -u $USER -o JobName,ElapsedRaw | awk -F'|' '$1 ~ /^lr-/ {s+=$2} END {printf "%.2f", s/3600}')
 reserved=$(squeue -h -u $USER -o '%j %l' | awk '$1 ~ /^lr-/ {n=split($2,t,":"); s+=(n==3? t[1]+t[2]/60 : t[1]/60)} END {printf "%.2f", s+0}')
 total=$(echo "$used + $reserved" | bc)

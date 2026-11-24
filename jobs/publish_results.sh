@@ -39,6 +39,7 @@ used=$(sacct -X -n -P -S 2026-11-24 -u $USER -o JobName,ElapsedRaw 2>/dev/null |
 { echo "# LayaRanker A100 status ($(date '+%F %H:%M %Z'))"; echo; echo "A100 hours used by lr-* jobs: $used"; echo
   echo '```'; cat $T/status/*.txt | sort -t'|' -k2; echo '```'; } > $T/STATUS.md
 git add -A; git commit -qm "$STATE $TAG $(date +%F_%H%M)" || true
+can_push || { echo "status kept in $T (no deploy key yet, so not pushed)"; exit 0; }
 for i in 1 2 3 4; do
   git push -q origin results 2>/dev/null && { echo "published $STATE $TAG"; exit 0; }
   git pull -q --rebase origin results 2>/dev/null; sleep 15

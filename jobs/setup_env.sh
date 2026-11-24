@@ -23,10 +23,11 @@ fi
 tar xzf $R/ids/work.tgz -C $W
 ls $W/data $W/work
 echo "2/4 venv on top of the overlay's Python (keeps its torch; adds the pinned transformers stack)"
-singularity exec --overlay $OVL:ro $SIF bash -c "
-  python -m venv --system-site-packages $W/venv &&
-  $W/venv/bin/pip install -q --upgrade pip &&
-  $W/venv/bin/pip install -q 'transformers==5.24.0' 'safetensors>=0.4' 'huggingface_hub>=0.25' scipy"
+[ -f $OVL ] || { echo "no overlay at $OVL"; exit 1; }
+box 'P=$(command -v python || command -v python3); echo "overlay python: $P"; $P -c "import torch; print(\"overlay torch\", torch.__version__)"' 
+rm -rf $W/venv
+box "P=\$(command -v python || command -v python3); \$P -m venv --system-site-packages $W/venv"
+box "$W/venv/bin/pip install -q --upgrade pip && $W/venv/bin/pip install -q 'transformers==5.24.0' 'safetensors>=0.4' 'huggingface_hub>=0.25' scipy"
 echo "3/4 backbones into $HF_HOME (compute nodes then run offline)"
 py - <<'PY'
 from huggingface_hub import snapshot_download
@@ -43,4 +44,5 @@ if [ -f ~/.ssh/wsfinal_hpc ]; then
 else
   echo "NOTE: no ~/.ssh/wsfinal_hpc key, so jobs cannot push results to GitHub (they stay in /scratch/$USER/wsfinal-results)"
 fi
+date > $W/.setup_ok
 echo "SETUP OK. Next: bash $R/jobs/submit.sh 0"
