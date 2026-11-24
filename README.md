@@ -1,39 +1,29 @@
-# wsfinal-hpc: LayaRanker A100 mailbox for NYU Torch
+# wsfinal-hpc: LayaRanker A100 jobs on NYU Torch
 
-No persistent agent and no SSH from the Mac. Claude pushes code and `runs.tsv` here; you submit from the Open OnDemand shell;
-every job pulls this repo when it starts and publishes its status and results to the `results` branch (deploy key).
-This repo holds no MS MARCO text (licensed for non-commercial research): `ids/` has only ids, and `jobs/setup_env.sh`
-downloads the text from the official MS MARCO site and checks the rebuilt 1M-passage collection against a checksum.
+Clone once, set up once, then dispatch jobs. Each job writes everything it produces to
+`/scratch/$USER/wsfinal/out/<tag>/`; download that folder from the Open OnDemand file browser.
+No MS MARCO text is stored here: `ids/` has only ids, and setup downloads the text from the official site
+(checked against the course file's checksum).
 
-Account `cs_gy_6643-2026fa`, partition `c12m85-a100-1`, one A100 per job. Budget: `BUDGET_HOURS` in `runs.tsv`
-(20 A100-hours for Phase 1). `jobs/submit.sh` refuses any job that would exceed it.
+Account `cs_gy_6643-2026fa`, partition `c12m85-a100-1`, one A100 per job. `jobs/submit.sh` refuses any job
+that would take total A100 hours past `BUDGET_HOURS` in `runs.tsv` (20 for Phase 1).
 
-## On Torch (Open OnDemand shell)
-
-Once:
 ```bash
-git clone https://github.com/mitran27/wsfinal-hpc.git /scratch/$USER/wsfinal-hpc
-bash /scratch/$USER/wsfinal-hpc/jobs/setup_env.sh        # data (≈ 1 GB download), venv, backbones; login node, ≈ 15 min
+git clone https://github.com/mitran27/wsfinal-hpc.git /scratch/$USER/wsfinal-hpc     # once
+bash /scratch/$USER/wsfinal-hpc/jobs/setup_env.sh                                     # once
+cd /scratch/$USER/wsfinal-hpc && git pull && bash jobs/submit.sh 0                    # 0 smoke, 1 core, 2 seeds
+squeue -u $USER                                                                       # progress
 ```
-Each wave (Claude says which stage):
-```bash
-cd /scratch/$USER/wsfinal-hpc && git pull && bash jobs/submit.sh 0      # 0 = smoke, 1 = core comparisons, 2 = seeds
-```
-Status: the `results` branch's `STATUS.md` (Claude reads it), or `squeue -u $USER`.
 
-## On the Mac
-
-`bash experiments/A100/push.sh "msg"` sends code changes; `bash experiments/A100/fetch.sh && bash experiments/A100/evaluate.sh`
-installs finished runs into `work/` and scores them on CPU.
-
-## Phase 1 runs (`runs.tsv`)
+On the Mac: `bash experiments/A100/install.sh <downloaded folders or zips>` then `bash experiments/A100/evaluate.sh`.
+Code changes: `bash experiments/A100/push.sh "msg"` (jobs pull the latest code when they start).
 
 | Run | Question |
 |---|---|
-| `lr-smoke` | Does everything work on Torch, and how many seconds per step (re-sizes every later estimate)? |
+| `lr-smoke` | Does it work on Torch, and how many seconds per step? |
 | `lr-pointwise` | Laya + LoRA scoring each passage alone |
 | `lr-candidate` | + attention across the candidate pool |
-| `lr-ffn` | Same parameters, no cross-candidate attention: attention or capacity? |
-| `lr-core` | Candidate attention + [SET] + ordinal head: the LayaRanker stage-1 core |
-| `lr-core-mbl` | The core on plain ModernBERT-large: does Laya's decision pre-training help? |
-| seeds 14, 15 | Pointwise vs core with three seeds each |
+| `lr-ffn` | Same parameters, no cross-candidate attention |
+| `lr-core` | Candidate attention + [SET] + ordinal head (LayaRanker stage-1 core) |
+| `lr-core-mbl` | The core on plain ModernBERT-large |
+| seeds 14, 15 | Pointwise vs core, three seeds each |

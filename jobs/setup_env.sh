@@ -45,11 +45,5 @@ print('backbones cached')
 PY
 echo "4/4 check"
 py -c 'import torch, transformers, rerank; print("torch", torch.__version__, "transformers", transformers.__version__, "rerank ok")'
-if [ -f ~/.ssh/wsfinal_hpc ]; then
-  git -C $R remote set-url --push origin git@github-wsfinal:mitran27/wsfinal-hpc.git
-  echo "results will be pushed with the deploy key"
-else
-  echo "NOTE: no ~/.ssh/wsfinal_hpc key, so jobs cannot push results to GitHub (they stay in /scratch/$USER/wsfinal-results)"
-fi
 date > $W/.setup_ok
 echo "SETUP OK. Next: bash $R/jobs/submit.sh 0"

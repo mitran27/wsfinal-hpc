@@ -21,6 +21,5 @@ grep -vE '^#|^\s*$' $R/runs.tsv | while IFS='|' read -r stage tag variant seed h
   if (( $(echo "$new > $BUDGET" | bc) )); then echo "$tag: SKIPPED, would reach $new of $BUDGET A100 hours"; continue; fi
   limit=$(printf '%d:%02d:00' "${hours%.*}" "$(echo "($hours - ${hours%.*}) * 60 / 1" | bc)")
   ID=$(sbatch --parsable -J $tag --time=$limit --export=ALL,TAG=$tag $R/jobs/laya.sbatch) && echo "$tag -> job $ID ($limit)"
-  SLURM_JOB_ID=$ID bash $R/jobs/publish_results.sh $tag SUBMITTED >/dev/null 2>&1
   total=$new
 done

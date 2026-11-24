@@ -10,5 +10,4 @@ export SINGULARITY_TMPDIR=/scratch/$USER/singularity-tmp SINGULARITY_CACHEDIR=/s
 INIT='[ -f /ext3/env.sh ] && source /ext3/env.sh; export PATH=/ext3/miniconda3/bin:$PATH'
 box() { singularity exec --nv --pwd $W --overlay $OVL:ro $SIF bash -c "$INIT; $1"; }
 py() { singularity exec --nv --pwd $W --overlay $OVL:ro $SIF env PYTHONPATH=$R/code/src $W/venv/bin/python "$@"; }
-can_push() { git -C $R remote get-url --push origin 2>/dev/null | grep -q '^git@'; }
 rerank() { py -I -m rerank --config $W/configs/pilot.toml "$@"; }
