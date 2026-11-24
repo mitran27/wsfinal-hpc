@@ -1,0 +1,15 @@
+# LayaRanker A100 runs on NYU Torch. One row = one Slurm job: LoRA fine-tune, then end-to-end reranking of the listed
+# splits. Columns are separated by "|". `sets` are config overrides (rerank --set ...), applied after A100_SETS.
+# BUDGET_HOURS=20
+# A100_SETS=finetune.steps=3000 finetune.queries_per_step=8 finetune.eval_every=500 finetune.eval_queries=500 backbone.batch_size=256
+# stage | tag              | variant     | seed | hours | sets                                                                     | splits
+0       | lr-smoke         | candidate   | 13   | 0.5   | model.set_token=true model.ordinal=true finetune.steps=40 finetune.eval_every=20 finetune.eval_queries=20 | dl19
+1       | lr-pointwise-s13 | pointwise   | 13   | 2     |                                                                          | dev dl19 dl20 calib
+1       | lr-candidate-s13 | candidate   | 13   | 2     |                                                                          | dev dl19 dl20 calib
+1       | lr-ffn-s13       | ffn_control | 13   | 2     |                                                                          | dev dl19 dl20 calib
+1       | lr-core-s13      | candidate   | 13   | 2     | model.set_token=true model.ordinal=true                                  | dev dl19 dl20 calib
+1       | lr-core-mbl-s13  | candidate   | 13   | 2     | model.set_token=true model.ordinal=true backbone.kind=hf backbone.fallback=answerdotai/ModernBERT-large | dev dl19 dl20 calib
+2       | lr-pointwise-s14 | pointwise   | 14   | 2     |                                                                          | dev dl19 dl20 calib
+2       | lr-pointwise-s15 | pointwise   | 15   | 2     |                                                                          | dev dl19 dl20 calib
+2       | lr-core-s14      | candidate   | 14   | 2     | model.set_token=true model.ordinal=true                                  | dev dl19 dl20 calib
+2       | lr-core-s15      | candidate   | 15   | 2     | model.set_token=true model.ordinal=true                                  | dev dl19 dl20 calib

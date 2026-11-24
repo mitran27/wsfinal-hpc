@@ -1,0 +1,61 @@
+# Pilot configuration. Relative paths resolve against this file's directory.
+# `data/` is a symlink to the course data folder (see README, "Running the code").
+
+[data]
+collection = "../data/collection_subset.tsv"     # pid <tab> text, the 1M-passage course subset
+queries_train = "../data/msmarco/queries.train.tsv"   # MS MARCO training queries (official release)
+qrels_train = "../data/msmarco/qrels.train.tsv"     # MS MARCO training judgments (binary)
+queries_dev = "../data/queries.dev.tsv"
+qrels_dev = "../data/qrels.dev.tsv"              # course dev qrels, 1,000 queries
+queries_trec = "../data/queries.eval.tsv"        # holds both DL 2019 and DL 2020 query text
+qrels_dl19 = "../data/qrels.eval.one.tsv"
+qrels_dl20 = "../data/qrels.eval.two.tsv"
+work_dir = "../work"
+
+[retrieval]
+k1 = 1.2
+b = 0.75
+depth = 100
+
+[splits]
+# Disjoint query sets drawn from MS MARCO training queries whose judged positive is in the corpus.
+train_queries = 20000
+val_queries = 1000      # model selection
+calib_queries = 1000    # calibration
+seed = 13
+
+[groups]
+group_size = 32
+negative_depth = 100    # hard negatives are sampled from BM25 ranks 1..negative_depth
+seed = 13
+
+[backbone]
+kind = "laya"                                   # "laya" or "hf" (any AutoModel checkpoint)
+repo = "convaiinnovations/laya"
+revision = "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+fallback = "answerdotai/ModernBERT-base"        # used with kind = "hf" if Laya fails to load
+max_length = 256
+max_query_tokens = 64
+batch_size = 64
+dtype = "auto"                                  # auto: bf16 on CUDA, fp16 on MPS, fp32 on CPU
+
+[model]
+width = 256
+heads = 4
+ff_width = 1024
+blocks = 1
+dropout = 0.1
+
+[train]
+steps = 3000
+batch_groups = 32
+lr = 3e-4
+weight_decay = 0.01
+warmup_steps = 100
+eval_every = 250
+ranknet_weight = 1.0
+rl_weight = 0.5
+rl_samples = 4
+rl_cutoff = 10
+freeze_projection = false
+seed = 13
