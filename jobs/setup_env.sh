@@ -22,12 +22,19 @@ if ! (cd $W/data && sha256sum -c --quiet $R/ids/collection_subset.sha256 2>/dev/
 fi
 tar xzf $R/ids/work.tgz -C $W
 ls $W/data $W/work
-echo "2/4 venv on top of the overlay's Python (keeps its torch; adds the pinned transformers stack)"
+echo "2/4 venv from the overlay's Python with torch + the pinned transformers stack (≈ 3 GB, a few minutes)"
 [ -f $OVL ] || { echo "no overlay at $OVL"; exit 1; }
-box 'P=$(command -v python || command -v python3); echo "overlay python: $P"; $P -c "import torch; print(\"overlay torch\", torch.__version__)"' 
+box 'echo "overlay python: $(command -v python || command -v python3)"'
+# torch: the version the earlier cv4 jobs used from /scratch/$USER/pylib (known to work with these nodes' drivers),
+# installed into our own venv so none of pylib's older libraries shadow ours.
+TV=$(ls -d /scratch/$USER/pylib/torch-*.dist-info 2>/dev/null | head -1 | sed -E 's/.*torch-([^-]+)\.dist-info/\1/')
+TORCH="torch${TV:+==$TV}"; echo "torch to install: $TORCH"
+export PIP_CACHE_DIR=/scratch/$USER/pip-cache
 rm -rf $W/venv
-box "P=\$(command -v python || command -v python3); \$P -m venv --system-site-packages $W/venv"
-box "$W/venv/bin/pip install -q --upgrade pip && $W/venv/bin/pip install -q 'transformers==5.24.0' 'safetensors>=0.4' 'huggingface_hub>=0.25' scipy"
+box "P=\$(command -v python || command -v python3); \$P -m venv $W/venv"
+box "$W/venv/bin/pip install -q --upgrade pip && $W/venv/bin/pip install -q '$TORCH' && \
+     $W/venv/bin/pip install -q 'transformers==5.24.0' 'safetensors>=0.4' 'huggingface_hub>=0.25' numpy scipy"
+box "$W/venv/bin/python -c 'import torch, transformers; print(\"venv torch\", torch.__version__, \"cuda build\", torch.version.cuda, \"transformers\", transformers.__version__)'"
 echo "3/4 backbones into $HF_HOME (compute nodes then run offline)"
 py - <<'PY'
 from huggingface_hub import snapshot_download
