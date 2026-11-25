@@ -118,6 +118,7 @@ class FinetuneConfig:
     eval_queries: int = 200         # validation queries scored at each evaluation
     eval_depth: int = 100
     grad_checkpointing: bool = True
+    train_split: str = "train"      # training candidates file under candidates/ ("train58": all eligible queries)
     seed: int = 13
 
 

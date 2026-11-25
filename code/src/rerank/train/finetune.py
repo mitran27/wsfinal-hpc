@@ -92,12 +92,12 @@ def finetune(cfg: Config, variant: str = "candidate", seed: int | None = None,
             encoder.model.gradient_checkpointing_enable(gradient_checkpointing_kwargs=kwargs)
 
     train_spec, val_spec = split_spec(cfg, "train"), split_spec(cfg, "val")
-    train_cands = io.read_candidates(cfg.candidates_dir / "train.tsv")
+    train_cands = io.read_candidates(cfg.candidates_dir / f"{f.train_split}.tsv")
     train_qids = [q for q, cs in train_cands.items() if any(c.grade >= train_spec.threshold for c in cs)]
     if max_train_queries is not None:
         train_qids = train_qids[:max_train_queries]
     val_cands = dict(list(io.read_candidates(cfg.candidates_dir / "val.tsv").items())[: f.eval_queries])
-    queries = train_spec.queries() | val_spec.queries()
+    queries = io.load_queries(cfg.data.queries_train, set(train_qids)) | val_spec.queries()
     val_qrels = {q: j for q, j in val_spec.qrels().items() if q in val_cands}
     passages = io.load_collection(cfg.data.collection,
                                   {c.pid for q in train_qids for c in train_cands[q]}

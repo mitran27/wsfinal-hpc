@@ -1,6 +1,6 @@
 # LayaRanker A100 runs on NYU Torch. One row = one Slurm job: LoRA fine-tune, then end-to-end reranking of the listed
 # splits. Columns are separated by "|". `sets` are config overrides (rerank --set ...), applied after A100_SETS.
-# BUDGET_HOURS=20
+# BUDGET_HOURS=25
 # A100_SETS=finetune.steps=3000 finetune.queries_per_step=8 finetune.eval_every=500 finetune.eval_queries=500 backbone.batch_size=256
 # stage | tag              | variant     | seed | hours | sets                                                                     | splits
 0       | lr-smoke         | candidate   | 13   | 0.5   | model.set_token=true model.ordinal=true finetune.steps=40 finetune.eval_every=20 finetune.eval_queries=20 | dl19
@@ -13,3 +13,10 @@
 2       | lr-pointwise-s15 | pointwise   | 15   | 2     |                                                                          | dev dl19 dl20 calib
 2       | lr-core-s14      | candidate   | 14   | 2     | model.set_token=true model.ordinal=true                                  | dev dl19 dl20 calib
 2       | lr-core-s15      | candidate   | 15   | 2     | model.set_token=true model.ordinal=true                                  | dev dl19 dl20 calib
+# Stage 3 (Phase 1b): is the plateau data or capacity? train58 = all 58,201 eligible training queries; 46,074 have their
+# positive in the BM25 top 100 (Phase 1: 15,761). 8,000 steps × 8 queries ≈ 1.4 passes (Phase 1: 1.5 passes over 15,761).
+3       | lr-core-58k-s13  | candidate   | 13   | 3     | model.set_token=true model.ordinal=true finetune.train_split=train58 finetune.steps=8000 finetune.eval_every=1000 | dev dl19 dl20 calib
+3       | lr-pointwise-58k-s13 | pointwise | 13 | 3     | finetune.train_split=train58 finetune.steps=8000 finetune.eval_every=1000 | dev dl19 dl20 calib
+3       | lr-core-58k-s14  | candidate   | 14   | 3     | model.set_token=true model.ordinal=true finetune.train_split=train58 finetune.steps=8000 finetune.eval_every=1000 | dev dl19 dl20 calib
+3       | lr-core-r64-s13  | candidate   | 13   | 1.5   | model.set_token=true model.ordinal=true finetune.lora_rank=64 finetune.lora_alpha=128 | dev dl19 dl20 calib
+3       | lr-core-mbl-58k-s13 | candidate | 13  | 3     | model.set_token=true model.ordinal=true backbone.kind=hf backbone.fallback=answerdotai/ModernBERT-large finetune.train_split=train58 finetune.steps=8000 finetune.eval_every=1000 | dev dl19 dl20 calib
