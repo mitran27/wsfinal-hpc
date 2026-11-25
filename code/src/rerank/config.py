@@ -22,6 +22,7 @@ class DataConfig:
     qrels_dl19: Path
     qrels_dl20: Path
     work_dir: Path = Path("work")
+    collection_train: Path | None = None   # full MS MARCO collection (8.8M) for training passages; None: `collection`
 
 
 @dataclass

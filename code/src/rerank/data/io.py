@@ -20,7 +20,7 @@ UNJUDGED = -1
 CANDIDATE_HEADER = "qid\tpid\trank\tbm25\tgrade"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)   # slots: the full-corpus training pool holds ≈ 50M of these
 class Candidate:
     pid: str
     rank: int

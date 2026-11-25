@@ -13,6 +13,13 @@ EXTRA=""; LIMIT=""; [ "$TAG" = lr-smoke ] && { EXTRA="--max-train-queries 400"; 
 cp $R/code/configs/pilot.toml $W/configs/pilot.toml
 # All-eligible training pool (stage 3): BM25 candidates for 58,201 queries, ids only.
 [[ "$sets" == *train58* && ! -s $W/work/candidates/train58.tsv ]] && { cat $R/ids/train58.tsv.part-* > $W/work/candidates/train58.tsv.$$ && mv $W/work/candidates/train58.tsv.$$ $W/work/candidates/train58.tsv; }   # parts < 100 MB (GitHub limit), joined atomically: jobs may start together
+# Full-corpus training pool (stage 4): BM25 over all 8.8M MS MARCO passages for every judged training query, ids only,
+# plus the full collection text, unpacked from the official archive that setup downloaded.
+if [[ "$sets" == *train500* ]]; then
+  [ -s $W/work/candidates/train500.tsv ] || { cat $R/ids/train500.tsv.part-* > $W/work/candidates/train500.tsv.$$ && mv $W/work/candidates/train500.tsv.$$ $W/work/candidates/train500.tsv; }
+  [ -s $W/data/msmarco/collection.tsv ] || { tar xzf $W/download/collection.tar.gz -O > $W/data/msmarco/collection.tsv.$$ && mv $W/data/msmarco/collection.tsv.$$ $W/data/msmarco/collection.tsv; }
+  [ "$(wc -l < $W/data/msmarco/collection.tsv)" = 8841823 ] || { echo "full collection incomplete"; exit 4; }
+fi
 M=$W/work/models/$TAG; O=$W/out/$TAG; mkdir -p $M $O; LOG=$O/train.log; start=$(date +%s)
 echo "TAG=$TAG variant=$variant seed=$seed sets=[$A100 $sets] splits=[$splits] start $(date)" | tee $LOG
 nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader | tee -a $LOG

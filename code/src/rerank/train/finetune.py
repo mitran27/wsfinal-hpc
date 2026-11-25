@@ -99,7 +99,7 @@ def finetune(cfg: Config, variant: str = "candidate", seed: int | None = None,
     val_cands = dict(list(io.read_candidates(cfg.candidates_dir / "val.tsv").items())[: f.eval_queries])
     queries = io.load_queries(cfg.data.queries_train, set(train_qids)) | val_spec.queries()
     val_qrels = {q: j for q, j in val_spec.qrels().items() if q in val_cands}
-    passages = io.load_collection(cfg.data.collection,
+    passages = io.load_collection(cfg.data.collection_train or cfg.data.collection,   # full collection: same text for course pids
                                   {c.pid for q in train_qids for c in train_cands[q]}
                                   | {c.pid for cs in val_cands.values() for c in cs[: f.eval_depth]})
 

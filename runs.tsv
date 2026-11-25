@@ -1,6 +1,6 @@
 # LayaRanker A100 runs on NYU Torch. One row = one Slurm job: LoRA fine-tune, then end-to-end reranking of the listed
 # splits. Columns are separated by "|". `sets` are config overrides (rerank --set ...), applied after A100_SETS.
-# BUDGET_HOURS=25
+# BUDGET_HOURS=520
 # A100_SETS=finetune.steps=3000 finetune.queries_per_step=8 finetune.eval_every=500 finetune.eval_queries=500 backbone.batch_size=256
 # stage | tag              | variant     | seed | hours | sets                                                                     | splits
 0       | lr-smoke         | candidate   | 13   | 0.5   | model.set_token=true model.ordinal=true finetune.steps=40 finetune.eval_every=20 finetune.eval_queries=20 | dl19
@@ -20,3 +20,11 @@
 3       | lr-core-58k-s14  | candidate   | 14   | 3     | model.set_token=true model.ordinal=true finetune.train_split=train58 finetune.steps=8000 finetune.eval_every=1000 | dev dl19 dl20 calib
 3       | lr-core-r64-s13  | candidate   | 13   | 1.5   | model.set_token=true model.ordinal=true finetune.lora_rank=64 finetune.lora_alpha=128 | dev dl19 dl20 calib
 3       | lr-core-mbl-58k-s13 | candidate | 13  | 3     | model.set_token=true model.ordinal=true backbone.kind=hf backbone.fallback=answerdotai/ModernBERT-large finetune.train_split=train58 finetune.steps=8000 finetune.eval_every=1000 | dev dl19 dl20 calib
+# Stage 4 (full MS MARCO): train500 = all 500,923 judged training queries (minus val/calib and 16 held-out text overlaps),
+# BM25 top 100 over the full 8.8M collection; ≈ 63% have their positive in the top 100 (≈ 314k trainable, Phase 1: 15,761).
+# Validation, calibration and every reported split stay on the course 1M corpus. Same recipe as stage 3, so
+# 500k-s13 vs 58k-s13 (8,000 steps each) isolates the data; 500k-16k shows whether validation keeps rising past
+# 8,000 steps on fresh queries, which sets the length of the final runs (findings §19).
+4       | lr-core-500k-s13 | candidate   | 13   | 3.5   | model.set_token=true model.ordinal=true finetune.train_split=train500 data.collection_train=../data/msmarco/collection.tsv finetune.steps=8000 finetune.eval_every=1000 | dev dl19 dl20 calib
+4       | lr-pointwise-500k-s13 | pointwise | 13 | 3.5  | finetune.train_split=train500 data.collection_train=../data/msmarco/collection.tsv finetune.steps=8000 finetune.eval_every=1000 | dev dl19 dl20 calib
+4       | lr-core-500k-16k-s13 | candidate | 13 | 6.5   | model.set_token=true model.ordinal=true finetune.train_split=train500 data.collection_train=../data/msmarco/collection.tsv finetune.steps=16000 finetune.eval_every=1000 | dev dl19 dl20 calib

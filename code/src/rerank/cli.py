@@ -5,6 +5,7 @@ Typical order:
     rerank splits                     train / val / calib query lists
     rerank retrieve all               top-100 BM25 candidates per split
     rerank groups                     sampled training groups
+    rerank fullpool                   training pools over the full 8.8M collection (train500)
     rerank encode train val calib dev dl19 dl20
     rerank train candidate            (and pointwise, ffn_control)
     rerank finetune candidate         LoRA backbone + head, end to end
@@ -51,6 +52,16 @@ def cmd_retrieve(cfg, args):
     index = BM25(cfg.index_dir, cfg.retrieval.k1, cfg.retrieval.b)
     for name in _splits(args.splits):
         _print(retrieve_split(cfg, split_spec(cfg, name), index))
+
+
+def cmd_fullpool(cfg, args):
+    from rerank.data import fullpool
+    if cfg.data.collection_train is None:
+        raise SystemExit("set data.collection_train to the full MS MARCO collection.tsv")
+    if not (cfg.work / "index_full" / "bm25_stats.json").exists():
+        _print(fullpool.build_full_index(cfg.data.collection_train, cfg.work / "index_full"))
+    _print(fullpool.build_full_split(cfg))
+    _print(fullpool.retrieve_full(cfg, args.workers, args.limit))
 
 
 def cmd_groups(cfg, args):
@@ -190,6 +201,9 @@ def main(argv=None) -> None:
     sub.add_parser("splits").set_defaults(fn=cmd_splits)
     s = sub.add_parser("retrieve"); s.add_argument("splits", **splits_arg); s.set_defaults(fn=cmd_retrieve)
     sub.add_parser("groups").set_defaults(fn=cmd_groups)
+    s = sub.add_parser("fullpool", help="BM25 training pools over the full 8.8M collection (train500)")
+    s.add_argument("--workers", type=int, default=8); s.add_argument("--limit", type=int)
+    s.set_defaults(fn=cmd_fullpool)
     s = sub.add_parser("encode"); s.add_argument("splits", **splits_arg)
     s.add_argument("--limit", type=int, help="encode only the first N queries (smoke tests)")
     s.set_defaults(fn=cmd_encode)
