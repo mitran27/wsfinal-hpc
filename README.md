@@ -15,7 +15,7 @@ cd /scratch/$USER/wsfinal-hpc && git pull && bash jobs/submit.sh 0              
 squeue -u $USER                                                                       # progress
 ```
 
-On the Mac: `bash experiments/A100/install.sh <downloaded folders or zips>` then `bash experiments/A100/evaluate.sh`.
+On the Mac: `bash experiments/A100/install.sh ~/Downloads/out.tgz` (the whole out/ folder, or single run folders/zips) then `bash experiments/A100/evaluate.sh`.
 Code changes: `bash experiments/A100/push.sh "msg"` (jobs pull the latest code when they start).
 
 | Run | Question |
