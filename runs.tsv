@@ -4,6 +4,7 @@
 # A100_SETS=finetune.steps=3000 finetune.queries_per_step=8 finetune.eval_every=500 finetune.eval_queries=500 backbone.batch_size=256
 # stage | tag              | variant     | seed | hours | sets                                                                     | splits
 0       | lr-smoke         | candidate   | 13   | 0.5   | model.set_token=true model.ordinal=true finetune.steps=40 finetune.eval_every=20 finetune.eval_queries=20 | dl19
+T       | lr-smoke-upload  | candidate   | 13   | 0.5   | model.set_token=true model.ordinal=true finetune.steps=40 finetune.eval_every=20 finetune.eval_queries=20 | dl19
 1       | lr-pointwise-s13 | pointwise   | 13   | 2     |                                                                          | dev dl19 dl20 calib
 1       | lr-candidate-s13 | candidate   | 13   | 2     |                                                                          | dev dl19 dl20 calib
 1       | lr-ffn-s13       | ffn_control | 13   | 2     |                                                                          | dev dl19 dl20 calib

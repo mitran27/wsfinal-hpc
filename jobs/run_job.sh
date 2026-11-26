@@ -9,7 +9,7 @@ IFS='|' read -r stage tag variant seed hours sets splits <<< "$row"
 variant=$(echo $variant); seed=$(echo $seed); splits=$(echo $splits)
 A100=$(grep -oE '^# A100_SETS=.*' $R/runs.tsv | cut -d= -f2-)
 ARGS=""; for s in $A100 $sets; do ARGS="$ARGS --set $s"; done
-EXTRA=""; LIMIT=""; [ "$TAG" = lr-smoke ] && { EXTRA="--max-train-queries 400"; LIMIT="--limit 10"; }
+EXTRA=""; LIMIT=""; [[ "$TAG" == lr-smoke* ]] && { EXTRA="--max-train-queries 400"; LIMIT="--limit 10"; }
 cp $R/code/configs/pilot.toml $W/configs/pilot.toml
 # All-eligible training pool (stage 3): BM25 candidates for 58,201 queries, ids only.
 [[ "$sets" == *train58* && ! -s $W/work/candidates/train58.tsv ]] && { cat $R/ids/train58.tsv.part-* > $W/work/candidates/train58.tsv.$SLURM_JOB_ID && mv $W/work/candidates/train58.tsv.$SLURM_JOB_ID $W/work/candidates/train58.tsv; }   # parts < 100 MB (GitHub limit), joined atomically: jobs may start together
@@ -41,4 +41,5 @@ cp $W/work/results/set_logits/$TAG-live.*.json $O/set_logits/ 2>/dev/null
 cp $W/work/results/timings/$TAG-live.*.json $O/timings/ 2>/dev/null
 [ $RC = 0 ] && cp $O/job.json $M/job.json
 echo "end $(date) rc=$RC a100_hours=$(printf %.2f $hours)  ->  download $O" | tee -a $LOG
+bash $R/jobs/upload.sh $O $TAG 2>&1 | tee -a $W/logs/upload.log   # to the Drive folder saved by go.sh (if any)
 exit $RC   # a failed run must show as FAILED in Slurm, not COMPLETED
