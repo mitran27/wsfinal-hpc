@@ -12,12 +12,12 @@ ARGS=""; for s in $A100 $sets; do ARGS="$ARGS --set $s"; done
 EXTRA=""; LIMIT=""; [ "$TAG" = lr-smoke ] && { EXTRA="--max-train-queries 400"; LIMIT="--limit 10"; }
 cp $R/code/configs/pilot.toml $W/configs/pilot.toml
 # All-eligible training pool (stage 3): BM25 candidates for 58,201 queries, ids only.
-[[ "$sets" == *train58* && ! -s $W/work/candidates/train58.tsv ]] && { cat $R/ids/train58.tsv.part-* > $W/work/candidates/train58.tsv.$$ && mv $W/work/candidates/train58.tsv.$$ $W/work/candidates/train58.tsv; }   # parts < 100 MB (GitHub limit), joined atomically: jobs may start together
+[[ "$sets" == *train58* && ! -s $W/work/candidates/train58.tsv ]] && { cat $R/ids/train58.tsv.part-* > $W/work/candidates/train58.tsv.$SLURM_JOB_ID && mv $W/work/candidates/train58.tsv.$SLURM_JOB_ID $W/work/candidates/train58.tsv; }   # parts < 100 MB (GitHub limit), joined atomically: jobs may start together
 # Full-corpus training pool (stage 4): BM25 over all 8.8M MS MARCO passages for every judged training query, ids only,
 # plus the full collection text, unpacked from the official archive that setup downloaded.
 if [[ "$sets" == *train500* ]]; then
-  [ -s $W/work/candidates/train500.tsv ] || { cat $R/ids/train500.tsv.part-* > $W/work/candidates/train500.tsv.$$ && mv $W/work/candidates/train500.tsv.$$ $W/work/candidates/train500.tsv; }
-  [ -s $W/data/msmarco/collection.tsv ] || { tar xzf $W/download/collection.tar.gz -O > $W/data/msmarco/collection.tsv.$$ && mv $W/data/msmarco/collection.tsv.$$ $W/data/msmarco/collection.tsv; }
+  [ -s $W/work/candidates/train500.tsv ] || { cat $R/ids/train500.tsv.part-* > $W/work/candidates/train500.tsv.$SLURM_JOB_ID && mv $W/work/candidates/train500.tsv.$SLURM_JOB_ID $W/work/candidates/train500.tsv; }
+  [ -s $W/data/msmarco/collection.tsv ] || { tar xzf $W/download/collection.tar.gz -O > $W/data/msmarco/collection.tsv.$SLURM_JOB_ID && mv $W/data/msmarco/collection.tsv.$SLURM_JOB_ID $W/data/msmarco/collection.tsv; }
   [ "$(wc -l < $W/data/msmarco/collection.tsv)" = 8841823 ] || { echo "full collection incomplete"; exit 4; }
 fi
 M=$W/work/models/$TAG; O=$W/out/$TAG; mkdir -p $M $O; LOG=$O/train.log; start=$(date +%s)
@@ -41,3 +41,4 @@ cp $W/work/results/set_logits/$TAG-live.*.json $O/set_logits/ 2>/dev/null
 cp $W/work/results/timings/$TAG-live.*.json $O/timings/ 2>/dev/null
 [ $RC = 0 ] && cp $O/job.json $M/job.json
 echo "end $(date) rc=$RC a100_hours=$(printf %.2f $hours)  ->  download $O" | tee -a $LOG
+exit $RC   # a failed run must show as FAILED in Slurm, not COMPLETED

@@ -10,6 +10,7 @@ for src in "$@"; do
   case "$src" in
     *.zip) d=$(mktemp -d); unzip -q "$src" -d "$d" ;;
     *.tgz|*.tar.gz) d=$(mktemp -d); tar xzf "$src" -C "$d" ;;
+    *.tar) d=$(mktemp -d); tar xf "$src" -C "$d" ;;
   esac
   find "$d" -name job.json -not -path '*/__MACOSX/*' | while read -r j; do
     r=$(dirname "$j")
